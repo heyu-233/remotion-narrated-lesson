@@ -79,7 +79,7 @@ export const Chapter1: FC<{ seconds: number }> = ({ seconds }) => {
           position: "absolute",
           inset: 0,
           background: palette.bgBottom,
-          opacity: fadeWindow(seconds, T_END - 0.6, T_END, 0, 0.6),
+          opacity: fadeWindow(seconds, T_END - 0.6, T_END, 0.01, 0.6),
           pointerEvents: "none",
         }}
       />

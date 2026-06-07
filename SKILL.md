@@ -444,7 +444,53 @@ npx remotion still src/index.ts InterruptEpisode out/check.png --frame=900
 - `npm run build` 必须真正 render MP4，不要只 bundle。
 - `remotion still` 只能抽查关键帧，不能替代连续预览；动画节奏、黑场、遮罩问题必须看视频或 Studio 时间轴。
 
-### 已踩坑记录
+### 已踩坑记录（持续更新）
+
+#### 模板 / 架构层面的坑
+
+- **`fadeWindow` 的 `inDur=0` 会导致 Remotion 崩溃**：模板自带的 outro fade 写法 `fadeWindow(seconds, T_END - 0.6, T_END, 0, 0.6)` 在 Remotion 4.0.469 下抛出 `inputRange must be strictly monotonically increasing but got [X, X]`。原因是 `inDur=0` 时 `interpolate([start, start+0], ...)` 产生了重复值。**修复**：将所有 `0` 改成 `0.01`。这是模板 bug，新项目必须修。
+- **Stage 0 / ColdOpen 的 DOM 层叠顺序**：ColdOpen 需要叠在 Ch1 上方但低于字幕条。不要用 `zIndex: 10`（会遮盖字幕），应该靠 DOM 顺序控制：`Ch1 → ColdOpen → SubtitleBar`。同时 ColdOpen 必须有独立背景（`ChapterBackground`），否则 Ch1 内容会透出。
+- **空屏期检查**：每个 segment 区间必须有可见的画面变化。开发完一章后，从章节开头拖时间轴到结尾，确认没有超过 3 秒的"只有背景+字幕"的空窗。本次 Ch6 出现了 ~50 秒空窗（链接脚本概念引入期），需要根据该段字幕补做前导概念画面。
+- **章节间衔接的 outro fade**：每章结尾的 fade 会影响下一章开头。如果下一章首帧有重大视觉元素，outro fade 的 `outDur` 不要超过 0.6s。
+
+#### Whisper / 转录相关
+
+- **Windows CUDA 与 faster-whisper 兼容性**：RTX 5070 Ti + CUDA 13.0 + torch 2.11 环境下 `cublas64_12.dll` 缺失，GPU 转写直接崩溃。**降级方案**：`device='cpu', compute_type='int8'` + `medium` 模型。medium 对中文技术术语的准确率约 85-90%，需要两轮系统性批量纠错。
+- **中文技术术语的转录纠错**：medium 模型对嵌入式术语的系统性错误包括："链接"→"连接"、"栈"→"站"、"中断"→"中段"、"向量表"→"相线表/信仰表"、"全局"→"全球"、"裸机"→"躲击"等。**建议**：第一次跑完 transcript 后立刻写 Python 脚本做批量 `str.replace` 纠错，不要手动逐条改。纠错后抽查 10 个 segment 确认。
+- **转录时长偏长时检查 VAD**：本次 769s 音频转出 387 个 segments，平均 2s/段，粒度合理。如果发现 segment 过少（平均 >5s），调低 `min_silence_duration_ms` 到 300-400ms。
+
+#### 布局与定位
+
+- **元素定位需提前规划网格**：本轮经历了"太小→放大→不居中→重叠→太靠上"五轮调整。建议在搭骨架时就确定一个布局网格，所有章节对齐。
+
+  **推荐 1920×1080 布局网格**：
+
+  | 区域 | y 范围 | 内容 |
+  |------|--------|------|
+  | 标题区 | 60–120 | `Heading` 组件，`top={80}`，居中 |
+  | 主内容区 | 180–700 | 代码窗、内存图、向量表、流程图等核心画面 |
+  | 底部注释 | 700–850 | 总结卡片、映射表、页码、过渡提示 |
+  | 字幕条 | 底部 28px | `SubtitleBar` 自动定位，不要在这区域放元素 |
+
+  **字号底线**（低于此值禁止提交）：
+  | 元素 | 最小 px |
+  |------|---------|
+  | 标题 | 28 |
+  | 副标题 | 18 |
+  | 卡片/标签 | 22 |
+  | 代码 | 18 |
+  | 注释/辅助文字 | 15 |
+- **Stage 0 卡片目标位置的双重检查**：卡片从"混乱堆"飞到 Flash/RAM 区域的动画，targetX/targetY 很容易算错（本次 RAM 卡片全落到 Flash 区）。写完 ITEMS 数组后，用 zone 的 x/y/w/h 边界与每张卡的 targetX/Y 做交叉验证。
+- **映射表/图例不要和主内容区重叠**：Ch3 的映射表放在代码窗和内存区中间导致重叠。大信息密度章节建议：代码窗在左上、内存可视化在右上、映射表/总结在下方独立区域。
+- **默认字号偏大不偏小**：在 1920×1080 画布上，正文最小 18px、代码 20px+、标题 26px+、卡片标签 22px+。宁可先做大再根据用户反馈缩小，也不要一开始就偏小（"太小了"是本次最高频的反馈之一）。
+- **重叠是比"太小"更严重的问题**：两个元素只要有一丝重叠就立刻破坏专业感。写完每章后必须拖时间轴全段检查，特别注意代码窗与内存图、映射表与主内容区、卡片与卡片之间。如果布局复杂（如 Ch3/Ch6），用 `npm run dev` 从头到尾拖一遍该章。
+
+#### 工具链
+
+- **Windows 下 npm/npx 的兼容问题**：`npm install` 可能超时，用 `--registry https://registry.npmmirror.com` 解决。`npx remotion render` 可能无法解析，直接用 `node_modules\.bin\remotion.cmd render`。
+- **TypeScript 版本漂移**：npm mirror 可能解析到比 `package.json` 更高的 TS 版本（本次装了 6.0.3 而非 5.9.3）。Remotion 的 esbuild 打包不受影响，但 `npx tsc` 会异常，跳过 tsc 检查即可。
+
+### 已踩坑记录（早期）
 
 - **黑屏遮罩**：`fadeWindow(seconds, start, end, 0, outDur)` 不能在 `seconds < start` 时返回 1，否则章节结尾黑场会从章节开头就盖住全屏。
 - **CSS transition**：Remotion 动画应由 `seconds/frame` 纯函数决定，不要在代码行、卡片或布局上依赖 CSS `transition`。
