@@ -574,6 +574,14 @@ npx remotion still src/index.ts InterruptEpisode out/check.png --frame=900
 - **空屏期检查**：每个 segment 区间必须有可见的画面变化。开发完一章后，从章节开头拖时间轴到结尾，确认没有超过 3 秒的"只有背景+字幕"的空窗。本次 Ch6 出现了 ~50 秒空窗（链接脚本概念引入期），需要根据该段字幕补做前导概念画面。
 - **章节间衔接的 outro fade**：每章结尾的 fade 会影响下一章开头。如果下一章首帧有重大视觉元素，outro fade 的 `outDur` 不要超过 0.6s。
 
+#### 代码讲解流 / 高亮粒度
+
+- **不要按章节整块高亮代码**：代码 walkthrough 里最容易犯的错，是把一个章节或一个函数整体绑定成一个 cue，例如讲 `warp_perspective_target` 时一直框住 20 行代码。这样大方向虽然对，但观众听到"第一行 / 第二行 / 这个函数"时，画面没有跟着移动，会不像真实 IDE 讲解。**修复原则**：章节可以粗分，但真正驱动画面的 `NarrationCue` 必须按 `transcript` segment 再细切，通常 1-4 个 segment 一个 cue。
+- **高亮要跟当前口播的语义最小单元走**：如果口播正在讲一行函数调用，就只高亮这一行；讲两行配合关系，才高亮两行；讲完整主循环收束时，也优先用逐步扫过的多个小 cue，而不是一次框住整个循环。`highlightLines` 和 `focusRange` 默认应该是 1 行，最多是一个很小的连续范围，除非用户明确想看结构总览。
+- **推荐实现方式**：先做一层 `subtitleTruth.ts` 或等价的字幕纠错层，只修 `text`，不动 `id/start/end`；再做 `narrationTruth.ts` / cue sheet，把每个 cue 绑定到 `{segStart, segEnd, codeState, focusRange, highlightLines}`。可以写一个 `cue(...)` helper 自动生成单行 `highlightLines`，避免手写大数组时偷懒框整段。
+- **开发顺序**：先跑 Whisper 并修明显术语错词，再根据修正后的 segment 文本设计高亮；不要先按 `script.md` 大段落写高亮。`script.md` 是结构参考，真正的时间轴和断句以 transcript segment 为准。
+- **验收方法**：至少抽查 4 类帧：函数定义处、关键 API 调用处、数据反变换/赋值处、最终主循环收束处。截图中如果出现"字幕在讲某一行，但高亮框住一整坨代码"，就必须继续拆 cue。
+
 #### Whisper / 转录相关
 
 - **Windows CUDA 与 faster-whisper 兼容性**：RTX 5070 Ti + CUDA 13.0 + torch 2.11 环境下 `cublas64_12.dll` 缺失，GPU 转写直接崩溃。**降级方案**：`device='cpu', compute_type='int8'` + `medium` 模型。medium 对中文技术术语的准确率约 85-90%，需要两轮系统性批量纠错。
