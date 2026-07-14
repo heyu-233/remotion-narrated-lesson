@@ -77,6 +77,10 @@
 remotion-narrated-lesson/
 ├── SKILL.md
 ├── README.md
+├── guides/
+│   └── recording-and-motion.md
+├── snippets/
+│   └── screen-recording/
 ├── templates/
 │   ├── package.json
 │   ├── remotion.config.ts
@@ -102,3 +106,4 @@ remotion-narrated-lesson/
 完整工作流、约束、反模式、避坑记录，请看：
 
 - [SKILL.md](./SKILL.md)
+- [录屏与动画检查表](./guides/recording-and-motion.md)

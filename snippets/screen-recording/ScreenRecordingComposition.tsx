@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from "react";
-import { AbsoluteFill, Audio, OffthreadVideo, Sequence, staticFile } from "remotion";
+import { AbsoluteFill, Audio, Freeze, interpolate, OffthreadVideo, Sequence, staticFile, useCurrentFrame } from "remotion";
 
 type ScreenRecordingCompositionProps = {
   recordingFile: string;
@@ -56,4 +56,51 @@ export const ClipSequence: FC<{ clips: Clip[] }> = ({ clips }) => (
       </Sequence>
     ))}
   </AbsoluteFill>
+);
+
+type CameraFreezeClipProps = {
+  file: string;
+  freezeAtFrame: number;
+  zoomFrames: number;
+  zoomScale?: number;
+  transformOrigin?: string;
+  volume?: number;
+};
+
+// Use inside a Sequence. The Sequence resets video time to the shot's local frame 0.
+const CameraFreezeClip: FC<CameraFreezeClipProps> = ({
+  file,
+  freezeAtFrame,
+  zoomFrames,
+  zoomScale = 1.14,
+  transformOrigin = "50% 50%",
+  volume = 0,
+}) => {
+  const frame = useCurrentFrame();
+  const scale = interpolate(
+    frame,
+    [freezeAtFrame, freezeAtFrame + zoomFrames],
+    [1, zoomScale],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+  const video = <OffthreadVideo src={staticFile(file)} volume={volume} style={{ width: "100%", height: "100%", objectFit: "cover" }} />;
+
+  return (
+    <AbsoluteFill style={{ overflow: "hidden" }}>
+      <AbsoluteFill style={{ transform: `scale(${scale})`, transformOrigin }}>
+        {frame >= freezeAtFrame ? <Freeze frame={freezeAtFrame}>{video}</Freeze> : video}
+      </AbsoluteFill>
+    </AbsoluteFill>
+  );
+};
+
+type TimedCameraFreezeRecordingProps = CameraFreezeClipProps & {
+  from: number;
+  durationInFrames: number;
+};
+
+export const TimedCameraFreezeRecording: FC<TimedCameraFreezeRecordingProps> = ({ from, durationInFrames, ...clip }) => (
+  <Sequence from={from} durationInFrames={durationInFrames}>
+    <CameraFreezeClip {...clip} />
+  </Sequence>
 );
