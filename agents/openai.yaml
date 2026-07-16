@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remotion Narrated Lesson"
+  short_description: "Build aligned narrated technical lessons."
+  default_prompt: "Use $remotion-narrated-lesson to build a narrated technical lesson with semantic anchors and an animatic."

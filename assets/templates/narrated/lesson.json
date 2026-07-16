@@ -1,0 +1,12 @@
+{
+  "narrationAnchors": [
+    {"id": "lesson.hook", "text": "Replace this stable narration phrase"},
+    {"id": "lesson.explain", "text": "Explain the concept"},
+    {"id": "lesson.detail", "text": "Show the detail"},
+    {"id": "lesson.highlight", "text": "Highlight the change"},
+    {"id": "lesson.summary", "text": "Summarize the lesson"}
+  ],
+  "beats": [],
+  "scenes": [],
+  "shots": []
+}

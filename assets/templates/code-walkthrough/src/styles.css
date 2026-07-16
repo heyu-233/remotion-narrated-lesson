@@ -1,0 +1,268 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.stage {
+  background: #1e1e1e;
+}
+
+.window {
+  background: #1e1e1e;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.timeline-strip {
+  background: #0f1118;
+  height: 8px;
+  width: 100%;
+}
+
+.timeline-progress {
+  background: linear-gradient(90deg, #3ab0ff, #59f0c2);
+  height: 100%;
+}
+
+.menubar {
+  align-items: center;
+  background: #1f1f1f;
+  border-bottom: 1px solid #2b2b2b;
+  display: flex;
+  height: 60px;
+  padding: 0 18px;
+}
+
+.menu-item {
+  color: #f0f0f0;
+  font-size: 25px;
+  line-height: 60px;
+  margin-right: 28px;
+}
+
+.status-pill {
+  background: #17334d;
+  border: 1px solid #24567f;
+  border-radius: 999px;
+  color: #cfeaff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: auto;
+  padding: 10px 18px;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 490px 1fr;
+  height: calc(100% - 152px);
+}
+
+.sidebar {
+  background: #181818;
+  border-right: 1px solid #2b2b2b;
+  color: #cccccc;
+  overflow: hidden;
+}
+
+.project-row {
+  align-items: center;
+  border-bottom: 1px solid #262626;
+  display: grid;
+  grid-template-columns: 32px 1fr 36px;
+  height: 62px;
+  padding: 0 10px;
+}
+
+.chevron {
+  color: #d4d4d4;
+  font-size: 28px;
+  text-align: center;
+}
+
+.project-name {
+  color: #d8d8d8;
+  font-size: 23px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.refresh {
+  color: #c9c9c9;
+  font-size: 25px;
+  text-align: center;
+}
+
+.folder-row,
+.file {
+  align-items: center;
+  display: flex;
+  font-size: 27px;
+  gap: 11px;
+  height: 42px;
+  padding-left: 64px;
+  white-space: nowrap;
+}
+
+.folder-row {
+  padding-left: 28px;
+}
+
+.file.active {
+  background: #37373d;
+  color: #ffffff;
+}
+
+.tree-icon {
+  fill: none;
+  flex: 0 0 auto;
+  height: 29px;
+  stroke: #d4d4d4;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  width: 29px;
+}
+
+.file-svg {
+  height: 28px;
+  width: 24px;
+}
+
+.folder-svg {
+  height: 29px;
+  width: 32px;
+}
+
+.editor-shell {
+  background: #1e1e1e;
+  display: grid;
+  grid-template-rows: 62px 1fr;
+  min-width: 0;
+}
+
+.tabbar {
+  align-items: end;
+  background: #181818;
+  border-bottom: 1px solid #2b2b2b;
+  display: flex;
+}
+
+.tab {
+  align-items: center;
+  background: #1f1f1f;
+  border-right: 1px solid #2b2b2b;
+  color: #cfcfcf;
+  display: flex;
+  font-size: 25px;
+  gap: 14px;
+  height: 62px;
+  min-width: 230px;
+  padding: 0 24px;
+}
+
+.tab .tree-icon {
+  height: 29px;
+  stroke: #d7d7d7;
+  width: 24px;
+}
+
+.tab.active {
+  background: #1e1e1e;
+  border-top: 2px solid #007acc;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.close {
+  color: #d8d8d8;
+  font-size: 28px;
+  font-weight: 400;
+  margin-left: auto;
+}
+
+.editor-frame {
+  background: #1e1e1e;
+  overflow: hidden;
+  position: relative;
+}
+
+.editor-camera {
+  height: 100%;
+  width: 100%;
+}
+
+.focus-block-line {
+  background: linear-gradient(90deg, rgba(255, 146, 43, 0.18), rgba(255, 184, 76, 0.06)) !important;
+  border-left: 3px solid #ff9d2f;
+  border-right: 1px solid rgba(255, 179, 71, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 179, 71, 0.26);
+}
+
+.focus-block-start {
+  border-top: 2px solid rgba(255, 191, 115, 0.92);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.focus-block-end {
+  border-bottom: 2px solid rgba(255, 191, 115, 0.92);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.line-accent {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-left: 4px solid rgba(99, 185, 255, 0.65);
+}
+
+.monaco-editor .current-line {
+  border: none !important;
+}
+
+.subtitle-bar {
+  align-items: center;
+  background: rgba(8, 10, 14, 0.94);
+  border-top: 1px solid #232a33;
+  bottom: 0;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 150px 1fr 220px;
+  height: 84px;
+  left: 0;
+  padding: 0 28px;
+  position: absolute;
+  right: 0;
+}
+
+.subtitle-label {
+  color: #7aa6c9;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.subtitle-text {
+  color: #eef4fa;
+  font-size: 28px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subtitle-meta {
+  color: #92a5b8;
+  font-size: 20px;
+  text-align: right;
+}

@@ -1,0 +1,24 @@
+{
+  "name": "remotion-code-walkthrough-template",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "preview": "remotion studio src/index.ts",
+    "build": "remotion render src/index.ts code-walkthrough out/code-walkthrough.mp4",
+    "render": "remotion render src/index.ts code-walkthrough out/code-walkthrough.mp4",
+    "transcribe": "python scripts/transcribe.py",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.469",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "remotion": "4.0.469"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "typescript": "5.9.3"
+  }
+}
