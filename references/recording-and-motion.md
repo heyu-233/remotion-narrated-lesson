@@ -1,5 +1,15 @@
 # Subtitle, Recording, And Motion Rules
 
+## Screenshot-led evidence workflow
+
+Use this workflow by default when the user mentions screenshots, screen captures, keyframes, or personally reproducing a QEMU/driver experiment.
+
+1. Before implementation, publish a screenshot manifest with `id`, narration anchors, reproduction action, expected visible result, crop/focus target, and annotation requirement.
+2. Let the user capture the raw evidence while reproducing the experiment. Keep raw files in `public/evidence/`; open and inspect each file before it is scheduled.
+3. Bake precise callouts into `public/evidence-annotated/`; never animate a floating highlight against a separately scaled image.
+4. Use stills as the default visual unit. A clip may be no longer than ten seconds and requires explicit user approval after its purpose, duration, and insertion anchor have been stated.
+5. If approval is absent, keep a named still-image placeholder. Do not record automatically.
+
 ## Subtitle truth
 
 1. Transcribe the original voiceover with segment and word timestamps.

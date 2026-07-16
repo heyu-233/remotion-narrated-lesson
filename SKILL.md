@@ -9,13 +9,21 @@ Build a semantic-timeline production system, not a chapter slideshow. Keep timin
 
 ## Choose the workflow
 
-1. Select `narrated` for system/concept animation, `code-walkthrough` for code-led explanation, or a hybrid only when both are necessary.
+1. Select `screenshot-led` when the user mentions screenshots, screen captures, keyframes, or wants to reproduce steps and capture evidence personally. This is the default for QEMU/driver lessons. Select `narrated` for system/concept animation, `code-walkthrough` for code-led explanation, or a hybrid only when both are necessary.
 2. Confirm the narration and audio before visual production. Use the user's recording by default; test TTS is only for reproducible validation.
 3. Read [workflows.md](references/workflows.md), then copy a template with `scripts/scaffold_project.py`.
 4. Transcribe audio, create the project's only authored timing file, `timeline.json`, then run `scripts/validate_timeline.py`. Never time business shots with `segmentRangeStart(id)`.
 5. Create short HTML/SVG motion prototypes for concept-heavy shots before implementing high-fidelity Remotion scenes. Use HTML to test visual language; recreate approved motion with frame-driven Remotion state.
 6. Write the beat sheet and shot list before implementation. Render and review an animatic before high-fidelity animation.
 7. Render MP4, run `scripts/validate_timeline.py`, generate a contact sheet, and visually inspect the full video.
+
+## Screenshot-Led Evidence Mode
+
+- Before recording or implementation, make the production plan include a screenshot manifest. For every required image state: `id`, narration anchor range, exact reproduction action, expected command/result, crop/focus area, and whether an annotation is needed.
+- The user reproduces the experiment and captures as many stills as useful. Store raw images in `public/evidence/`; inspect each source before using it. Bake reviewed callouts into `public/evidence-annotated/` and declare the selected file in `timeline.json`.
+- Build the lesson from these stills first. Use short, controllable image changes, crop pushes, and annotations to match each narration anchor; do not pad the timeline with a static terminal recording.
+- Video is optional and may be at most ten seconds per clip. Use it only when motion itself teaches something that sequential screenshots cannot. Before recording any short clip, explain its purpose, planned duration, and insertion anchor, then wait for the user's explicit approval.
+- Do not begin automated screen recording merely because an outline contains a video slot. If the user has not approved that clip, leave a named screenshot placeholder in the plan instead.
 
 ## Required model
 
