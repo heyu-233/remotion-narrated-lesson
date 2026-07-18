@@ -22,8 +22,44 @@ Build a semantic-timeline production system, not a chapter slideshow. Keep timin
 - Before recording or implementation, make the production plan include a screenshot manifest. For every required image state: `id`, narration anchor range, exact reproduction action, expected command/result, crop/focus area, and whether an annotation is needed.
 - The user reproduces the experiment and captures as many stills as useful. Store raw images in `public/evidence/`; inspect each source before using it. Bake reviewed callouts into `public/evidence-annotated/` and declare the selected file in `timeline.json`.
 - Build the lesson from these stills first. Use short, controllable image changes, crop pushes, and annotations to match each narration anchor; do not pad the timeline with a static terminal recording.
+- Do not hand-write percentage coordinates for callouts. Declare the target text and its narration anchor, locate it against the original screenshot with OCR, and retain source-pixel geometry. An unresolved or ambiguous target is a build failure, not a reason to guess a rectangle.
+- Treat OCR provenance as mandatory data, not a suggestion. Every callout record must declare `source: "ocr"` or an equivalent named OCR engine and store its source-pixel box. If OCR cannot resolve the target, use `source: "manual"`, retain the reviewed source-pixel box, set `manualReviewed: true`, and record the reason. A guessed box, an unreviewed manual box, or a missing provenance field blocks preview and render.
+- **Use one coordinate authority.** Store OCR/manual-review results only in `callouts.targets.json`; after review, run `scripts/generate_callouts.py <project>`. It creates `src/generated-callouts.ts`, the only runtime source for callout boxes and evidence crops. TSX may import and transform this generated data, but must never contain a second handwritten `{x, y, width, height}` callout definition.
+- **Fail closed on stale coordinates.** The generator embeds the SHA-256 of `callouts.targets.json`. `validate_timeline.py --source-root <project>/src` compares that digest with the generated file, requires the runtime source to import `generated-callouts`, and rejects handwritten coordinate literals outside the generated file. A changed OCR box therefore cannot silently leave an old highlighter on screen.
+- **Make crops evidence-safe.** Each evidence image in `callouts.targets.json` declares its source size and source-pixel crop. The crop must contain every active callout plus its configured `safePadding` (default: 24 source pixels) on all four sides. Missing crop metadata, a clipped box, or a crop outside the source image blocks preview and render.
+- Do not replace an unavailable OCR tool with approximate coordinates to keep production moving. Install or use an available local OCR runtime first; if that is impossible, stop at the material-preparation gate and report the blocker.
+- Give every callout a horizontal and vertical padding margin around the detected text. Draw an outline and outer glow only; do not use an opaque fill that covers terminal output or code.
+- For a screenshot containing multiple commands, declare one callout per command and bind each one to its own narration-anchor range. Show only the current callout. When adjacent ranges share the same screenshot, interpolate the frame between their source-pixel boxes instead of showing all callouts at once.
+- When a near-square editor capture is used to explain code, keep the original in `public/evidence/` and create a separate, manually reviewed code-crop asset that contains the relevant editor region plus enough surrounding lines for context. Use the crop only during code narration; never stretch the full screenshot or crop away the command/result needed by the current narration anchor.
+- Every screenshot must have at least one narration-bound callout. A screenshot may be exempt only when a production manifest gives a specific reason that no target should be emphasized; surface that exception for review. If OCR cannot locate a long command, retry with a shorter distinctive token, then use a manually reviewed source-pixel box. Never silently omit a callout because OCR was inconvenient.
 - Video is optional and may be at most ten seconds per clip. Use it only when motion itself teaches something that sequential screenshots cannot. Before recording any short clip, explain its purpose, planned duration, and insertion anchor, then wait for the user's explicit approval.
 - Do not begin automated screen recording merely because an outline contains a video slot. If the user has not approved that clip, leave a named screenshot placeholder in the plan instead.
+
+Use this minimum evidence contract. `sourcePixelBox`, `sourceSize`, and `crop` are all measured against the original, uncropped screenshot. `source` may be a named OCR runtime such as `windows-ocr`; manual fallback requires both review fields.
+
+```json
+{
+  "images": [
+    {
+      "image": "01-terminal.png",
+      "sourceSize": {"width": 1920, "height": 1080},
+      "crop": {"x": 120, "y": 80, "width": 1500, "height": 860}
+    }
+  ],
+  "callouts": [
+    {
+      "id": "command-01",
+      "image": "01-terminal.png",
+      "anchor": "narration.010",
+      "target": "wsl --status",
+      "source": "windows-ocr",
+      "sourcePixelBox": {"x": 300, "y": 420, "width": 260, "height": 36},
+      "safePadding": 24
+    }
+  ],
+  "exceptions": []
+}
+```
 
 ## Required model
 
@@ -42,6 +78,14 @@ Use `anchorStart("context.save")` and `anchorEnd("context.restore")` in Remotion
 - Generate derived subtitle exports from `timeline.json`; never hand-edit their timecodes. Correct wording inside the corresponding narration anchor, then regenerate.
 - Before preview or render, run `python <skill>/scripts/validate_timeline.py <project> --source-root <project>/src`. Fix every error. Do not waive duplicate timelines, unknown anchors, raw scene seconds, or uncovered narration.
 
+## Subtitle Lock Contract (non-negotiable)
+
+- **Captions have one source only:** the `captions` array in `timeline.json`. Every caption must reference exactly one `kind: "narration"` anchor, whose `start` and `end` exactly match its raw ASR source segment. Never render subtitles from `visualAnchors`, shot ranges, beat ranges, scene ranges, or a summary sentence.
+- **Keep visual timing separate:** `visualAnchors` may control screenshots, diagrams, cuts, and camera motion only. They are forbidden as a subtitle data source, including as a fallback when a caption is missing. If a caption is missing, render no subtitle and fail validation.
+- **Bind screenshots to spoken anchors:** every image shot must start and end on `kind: "narration"` anchors. Broad `visualAnchors` are for conceptual diagrams only; they must never keep a screenshot on screen across multiple spoken steps.
+- **Lock captions before visuals:** transcript correction and caption timing are a dedicated phase. Do not create screenshot shots, animation scenes, or a final preview until the caption review gate below is approved.
+- **Do not optimize away the mapping:** a semantic beat may group many spoken phrases for visual continuity, but the subtitle renderer must still iterate the original `captions` references. A shorter implementation is never a reason to merge subtitle ranges.
+
 ## Failure-Proof Production Rules
 
 - Migrate timing before deleting it: first search every `anchorStart()` / `anchorEnd()` use, move each scene to the new anchor IDs, then remove the legacy timing file and run the validator immediately. Never delete or rename a timeline based on one scene compiling.
@@ -59,7 +103,23 @@ Use `anchorStart("context.save")` and `anchorEnd("context.restore")` in Remotion
 - Make scenes stable stages and shots 1.5-5 seconds of continuous composition. Preserve continuity unless a cut is intentional.
 - Reserve the bottom subtitle safe area. Return blank subtitles outside a matching interval; never repeat the last line.
 - Generate one caption per spoken phrase from the source audio. Treat ASR only as timing evidence; manually correct the visible text, especially technical names, and never replace a spoken passage with a coarse summary caption.
+- Caption source validation is build-blocking: `src/timings.ts` (or the project subtitle module) must use the caption export derived from `timeline.captions` and must not import or search `visualAnchors` for subtitle rendering. Run the timeline validator before every preview and render.
+- **Caption review gate:** before visual implementation, generate three short audio-plus-subtitle samples distributed across the beginning, middle, and ending of the narration. Record their paths and a human approval in `caption-review.json`. The validator must fail if fewer than three samples exist, a sample is missing, or approval is absent. Do not use a full-video render as a substitute for this gate.
+
+Use this minimum review record. `approved` stays `false` until the user has listened to all three samples:
+
+```json
+{
+  "approved": false,
+  "samples": [
+    {"anchor": "narration.001", "preview": "out/caption-qc/01.mp4", "approved": false},
+    {"anchor": "narration.100", "preview": "out/caption-qc/02.mp4", "approved": false},
+    {"anchor": "narration.200", "preview": "out/caption-qc/03.mp4", "approved": false}
+  ]
+}
+```
 - Before any preview, validate the canonical timeline, its raw transcript duration, caption coverage, and declared evidence assets. Treat a missing or stale image as a build failure, not a visual warning.
+- Before any preview or export in screenshot-led mode, run the generated-callout gate: `python <skill>/scripts/generate_callouts.py <project>` followed by `python <skill>/scripts/validate_timeline.py <project> --source-root <project>/src`. Do not bypass a failed OCR, digest, import, or crop-safety check with a manual TSX edit.
 - Use the motion tokens in [visual-system.md](references/visual-system.md); do not invent routine easing or decorative motion per shot.
 - Place every screen recording inside a `Sequence` that begins at its shot frame. For a result reveal, freeze a frame from the same video source before applying a camera push; never fake an empty terminal with a blackout overlay or swap to an unrelated poster.
 - Run automated QC and inspect the contact sheet and full render. Address errors; record explicit waivers for warnings.
