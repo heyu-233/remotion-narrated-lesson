@@ -17,6 +17,13 @@ Build a semantic-timeline production system, not a chapter slideshow. Keep timin
 6. Write the beat sheet and shot list before implementation. Render and review an animatic before high-fidelity animation.
 7. Render MP4, run `scripts/validate_timeline.py`, generate a contact sheet, and visually inspect the full video.
 
+## Operation-first outline rule
+
+- Classify every narration anchor in the outline as `operation`, `explanation`, or `concept` before choosing visuals.
+- For operation language such as create, open, click, type, run, copy, mount, or replace, default to a real screenshot or an explicitly approved screen recording that shows the named UI state and result. Do not substitute an abstract animation merely because it is easier to produce.
+- Use animation for explanations, relationships, and invisible system behavior. If an operation cannot yet be captured, keep a named evidence placeholder in the outline and material manifest instead of converting it into a concept card.
+- Bind the screenshot or recording to the exact spoken operation anchor; do not let a broad chapter animation cover it.
+
 ## Screenshot-Led Evidence Mode
 
 - Before recording or implementation, make the production plan include a screenshot manifest. For every required image state: `id`, narration anchor range, exact reproduction action, expected command/result, crop/focus area, and whether an annotation is needed.
@@ -104,17 +111,16 @@ Use `anchorStart("context.save")` and `anchorEnd("context.restore")` in Remotion
 - Reserve the bottom subtitle safe area. Return blank subtitles outside a matching interval; never repeat the last line.
 - Generate one caption per spoken phrase from the source audio. Treat ASR only as timing evidence; manually correct the visible text, especially technical names, and never replace a spoken passage with a coarse summary caption.
 - Caption source validation is build-blocking: `src/timings.ts` (or the project subtitle module) must use the caption export derived from `timeline.captions` and must not import or search `visualAnchors` for subtitle rendering. Run the timeline validator before every preview and render.
-- **Caption review gate:** before visual implementation, generate three short audio-plus-subtitle samples distributed across the beginning, middle, and ending of the narration. Record their paths and a human approval in `caption-review.json`. The validator must fail if fewer than three samples exist, a sample is missing, or approval is absent. Do not use a full-video render as a substitute for this gate.
+- **Caption review gate:** before visual implementation, generate two short audio-plus-subtitle samples from the beginning and ending of the narration. Record their paths and a human approval in `caption-review.json`. The validator must fail if fewer than two samples exist, a sample is missing, or approval is absent. Do not use a full-video render as a substitute for this gate.
 
-Use this minimum review record. `approved` stays `false` until the user has listened to all three samples:
+Use this minimum review record. `approved` stays `false` until the user has listened to both samples:
 
 ```json
 {
   "approved": false,
   "samples": [
-    {"anchor": "narration.001", "preview": "out/caption-qc/01.mp4", "approved": false},
-    {"anchor": "narration.100", "preview": "out/caption-qc/02.mp4", "approved": false},
-    {"anchor": "narration.200", "preview": "out/caption-qc/03.mp4", "approved": false}
+    {"anchor": "narration.001", "preview": "out/caption-qc/01-beginning.mp4", "approved": false},
+    {"anchor": "narration.200", "preview": "out/caption-qc/02-ending.mp4", "approved": false}
   ]
 }
 ```

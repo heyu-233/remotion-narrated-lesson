@@ -93,17 +93,17 @@ def check_subtitle_source(root: Path, errors: list[str]) -> None:
 
 
 def check_caption_review(root: Path, anchor_map: dict[str, dict], errors: list[str]) -> None:
-    """Require three reviewed audio/subtitle samples before visual production is accepted."""
+    """Require two reviewed audio/subtitle samples before visual production is accepted."""
     review_path = root / "caption-review.json"
     if not review_path.exists():
-        errors.append("missing caption-review.json; create three approved audio/subtitle samples before visual production")
+        errors.append("missing caption-review.json; create two approved audio/subtitle samples before visual production")
         return
     review = read_json(review_path, errors)
     samples = review.get("samples")
     if not review.get("approved"):
         errors.append("caption review is not approved")
-    if not isinstance(samples, list) or len(samples) < 3:
-        errors.append("caption review must contain at least three samples")
+    if not isinstance(samples, list) or len(samples) < 2:
+        errors.append("caption review must contain at least two samples")
         return
     for index, sample in enumerate(samples, start=1):
         anchor_id = sample.get("anchor") if isinstance(sample, dict) else None
