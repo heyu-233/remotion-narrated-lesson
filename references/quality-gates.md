@@ -11,3 +11,5 @@ Before accepting a narrated lesson, additionally verify:
 - A result-reveal push freezes a frame from the same recording; no blackout reveal, unrelated poster swap, or visible flash occurs.
 - Camera crops preserve the intended result area and do not cut commands, terminal prefixes, or device output.
 - Concept scenes contain a meaningful motion/state change every 1.5-5 seconds; sustained static card layouts require an explicit waiver.
+- 3D scenes use `ThreeCanvas`, derive motion from `useCurrentFrame()`, and contain no autonomous clock or unreviewed model.
+- Setup, action transitions, settle, and handoff each have an inspected still. Camera framing preserves the subtitle safe area and does not clip the teaching target.

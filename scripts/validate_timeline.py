@@ -278,6 +278,84 @@ def check_generated_callout_contract(root: Path, source_root: Path, manifest: di
         errors.append("runtime source does not import generated-callouts; callout geometry has a second authority")
 
 
+def check_three_scene_contract(root: Path, source_root: Path, errors: list[str]) -> None:
+    """Reject autonomous 3D clocks and undocumented model assets."""
+    source_files = [
+        path
+        for path in source_root.rglob("*.*")
+        if path.suffix in {".ts", ".tsx", ".js", ".jsx"}
+    ]
+    three_files: list[tuple[Path, str]] = []
+    for path in source_files:
+        text = path.read_text(encoding="utf-8")
+        relative_parts = {part.lower() for part in path.relative_to(source_root).parts}
+        if (
+            "three" in relative_parts
+            or "@remotion/three" in text
+            or "<ThreeCanvas" in text
+        ):
+            three_files.append((path, text))
+    if not three_files:
+        return
+
+    forbidden = (
+        (r"\buseFrame\s*\(", "useFrame() creates an autonomous R3F clock; use useCurrentFrame()"),
+        (r"\b(?:useEffect|useLayoutEffect)\s*\(", "3D scene state must be a pure function of the Remotion frame"),
+        (r"\b(?:setTimeout|setInterval)\s*\(", "timers are forbidden in deterministic 3D scenes"),
+        (r"\bDate\.now\s*\(", "Date.now() is forbidden in deterministic 3D scenes"),
+        (r"\bperformance\.now\s*\(", "performance.now() is forbidden in deterministic 3D scenes"),
+        (r"\bMath\.random\s*\(", "unseeded randomness is forbidden in deterministic 3D scenes"),
+        (r"from\s+[\"']@theatre/(?:core|studio)[\"']", "Theatre.js cannot be a second runtime timeline"),
+        (
+            r"import\s*\{[^}]*\bCanvas\b[^}]*\}\s*from\s*[\"']@react-three/fiber[\"']",
+            "use @remotion/three ThreeCanvas instead of the raw R3F Canvas",
+        ),
+    )
+    uses_remotion_frame = False
+    model_references: set[str] = set()
+    model_pattern = re.compile(r"[\"']([^\"']+\.(?:glb|gltf))[\"']", re.IGNORECASE)
+    for path, text in three_files:
+        relative = path.relative_to(source_root)
+        uses_remotion_frame = uses_remotion_frame or "useCurrentFrame" in text
+        model_references.update(model_pattern.findall(text))
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            for pattern, message in forbidden:
+                if re.search(pattern, line):
+                    errors.append(f"{message}: {relative}:{line_no}")
+    if not uses_remotion_frame:
+        errors.append("3D source must derive animation from Remotion useCurrentFrame()")
+
+    if not model_references:
+        return
+    manifest_path = root / "three-assets.json"
+    if not manifest_path.is_file():
+        errors.append("3D model references require three-assets.json with source and license provenance")
+        return
+    manifest = read_json(manifest_path, errors)
+    assets = manifest.get("assets")
+    if not isinstance(assets, list):
+        errors.append("three-assets.json must contain an assets array")
+        return
+    by_path = {
+        item.get("path"): item
+        for item in assets
+        if isinstance(item, dict) and isinstance(item.get("path"), str)
+    }
+    for reference in sorted(model_references):
+        normalized = reference.removeprefix("/")
+        item = by_path.get(normalized)
+        if not item:
+            errors.append(f"3D model is missing from three-assets.json: {reference}")
+            continue
+        if not (root / normalized).is_file():
+            errors.append(f"3D model file does not exist: {reference}")
+        for field in ("source", "license", "upAxis", "unit"):
+            if not str(item.get(field, "")).strip():
+                errors.append(f"3D model {reference} has no {field} metadata")
+        if item.get("reviewed") is not True:
+            errors.append(f"3D model {reference} has not passed visual/license review")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("project", type=Path)
@@ -348,6 +426,7 @@ def main() -> None:
         source_root = args.source_root.resolve()
         check_source_literals(source_root, set(anchor_map), errors)
         check_generated_callout_contract(root, source_root, manifest, errors)
+        check_three_scene_contract(root, source_root, errors)
 
     report = {"errors": errors, "timeline": str(timeline_path)}
     out = root / "out"

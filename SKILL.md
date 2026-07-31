@@ -24,6 +24,13 @@ Build a semantic-timeline production system, not a chapter slideshow. Keep timin
 - Use animation for explanations, relationships, and invisible system behavior. If an operation cannot yet be captured, keep a named evidence placeholder in the outline and material manifest instead of converting it into a concept card.
 - Bind the screenshot or recording to the exact spoken operation anchor; do not let a broad chapter animation cover it.
 
+## Deterministic 3D workflow
+
+- Read [three-dimensional-scenes.md](references/three-dimensional-scenes.md) before adding React Three Fiber, GLB/GLTF assets, 3D cameras, lights, or postprocessing.
+- Remotion remains the only clock, preview, and renderer. Use `ThreeCanvas` from `@remotion/three` and derive every animated value from `useCurrentFrame()`.
+- Keep real operations and results as screenshots or approved recordings. Use 3D for depth, internal system relationships, signal flow, and mechanical articulation.
+- The validator must reject raw R3F `Canvas`, `useFrame()`, effects used as clocks, timers, wall-clock time, unseeded randomness, Theatre.js runtime timing, and model assets missing reviewed license metadata.
+
 ## Screenshot-Led Evidence Mode
 
 - Before recording or implementation, make the production plan include a screenshot manifest. For every required image state: `id`, narration anchor range, exact reproduction action, expected command/result, crop/focus area, and whether an annotation is needed.
@@ -137,4 +144,5 @@ Use this minimum review record. `approved` stays `false` until the user has list
 - Read [code-walkthrough.md](references/code-walkthrough.md) for the code template.
 - Read [visual-system.md](references/visual-system.md) for stage, motion, and layout rules.
 - Read [recording-and-motion.md](references/recording-and-motion.md) before building subtitles, screen recordings, camera pushes, or HTML-derived animation.
+- Read [three-dimensional-scenes.md](references/three-dimensional-scenes.md) for the supported R3F stack, single-clock contract, model provenance, and 3D QC.
 - Read [quality-gates.md](references/quality-gates.md) before rendering or accepting an output.
