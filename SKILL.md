@@ -1,21 +1,33 @@
 ---
 name: remotion-narrated-lesson
-description: Create deterministic, narrated technical teaching videos with Remotion. Use when producing animated computer-science, programming, systems, AI, or embedded lessons from a narration script and voiceover; aligning Whisper transcripts; planning storyboard/animatic/scene/shot structure; rendering MP4; or validating timeline, subtitles, and video quality.
+description: Create deterministic narrated technical and engineering videos with Remotion. Use when producing computer-science, programming, embedded, electronics, control, mechanism, or system lessons from narration and voiceover; designing complex SVG/HTML/3D engineering animation; aligning transcripts; planning storyboards, animatics, scenes, and shots; rendering MP4; or validating timelines, evidence, subtitles, and video quality.
 ---
 
-# Remotion Narrated Lesson V2
+# Remotion Narrated Lesson V3
 
 Build a semantic-timeline production system, not a chapter slideshow. Keep timing stable across re-recordings by deriving scenes and shots from narration anchors rather than Whisper segment IDs.
+
+Use Remotion as the only runtime, timeline authority, preview environment, and renderer. Borrow animation-design ideas from other systems only as design vocabulary; do not introduce a second animation runtime unless the user explicitly requests a separately rendered asset workflow.
 
 ## Choose the workflow
 
 1. Select `screenshot-led` when the user mentions screenshots, screen captures, keyframes, or wants to reproduce steps and capture evidence personally. This is the default for QEMU/driver lessons. Select `narrated` for system/concept animation, `code-walkthrough` for code-led explanation, or a hybrid only when both are necessary.
 2. Confirm the narration and audio before visual production. Use the user's recording by default; test TTS is only for reproducible validation.
-3. Read [workflows.md](references/workflows.md), then copy a template with `scripts/scaffold_project.py`.
+3. Read [workflows.md](references/workflows.md) and [official-remotion-practices.md](references/official-remotion-practices.md), then copy a template with `scripts/scaffold_project.py`.
 4. Transcribe audio, create the project's only authored timing file, `timeline.json`, then run `scripts/validate_timeline.py`. Never time business shots with `segmentRangeStart(id)`.
-5. Create short HTML/SVG motion prototypes for concept-heavy shots before implementing high-fidelity Remotion scenes. Use HTML to test visual language; recreate approved motion with frame-driven Remotion state.
+5. For concept-heavy shots, optionally create short HTML/SVG motion prototypes when they help resolve uncertain spatial logic. Treat them as an internal design aid, not a user-review gate; continue into frame-driven Remotion implementation unless the user explicitly asks to inspect or approve the prototype.
 6. Write the beat sheet and shot list before implementation. Render and review an animatic before high-fidelity animation.
 7. Render MP4, run `scripts/validate_timeline.py`, generate a contact sheet, and visually inspect the full video.
+
+## Complex animation workflow
+
+- Read [motion-design-language.md](references/motion-design-language.md) when the lesson needs object choreography, module assembly, geometry, mechanisms, signal flow, synchronized diagrams, or failure/recovery animation.
+- Read [three-dimensional-scenes.md](references/three-dimensional-scenes.md) before adding React Three Fiber, GLB/GLTF assets, 3D cameras, lights, or postprocessing.
+- Write each complex shot as `setup -> action -> settle -> evidence -> handoff`. Every phase must have a named semantic purpose; omit phases that do not improve comprehension.
+- Describe motion with semantic verbs such as `dock`, `trace`, `measure`, `transfer`, `injectFailure`, and `transitionState` before choosing SVG, HTML, Canvas, or 3D implementation.
+- When spatial logic is uncertain, an HTML/SVG prototype may be used internally to test the hardest mechanism. Rebuild the selected behavior with `useCurrentFrame()`, `interpolate()`, and explicit frame ranges. Do not pause for prototype approval unless the user explicitly requests it.
+- Keep object identity and spatial continuity across adjacent shots. Prefer changing camera focus or system state over replacing the entire scene.
+- Read [engineering-animation-patterns.md](references/engineering-animation-patterns.md) for mechanisms, dimension drawings, test benches, state machines, and synchronized failure injection.
 
 ## Operation-first outline rule
 
@@ -23,13 +35,6 @@ Build a semantic-timeline production system, not a chapter slideshow. Keep timin
 - For operation language such as create, open, click, type, run, copy, mount, or replace, default to a real screenshot or an explicitly approved screen recording that shows the named UI state and result. Do not substitute an abstract animation merely because it is easier to produce.
 - Use animation for explanations, relationships, and invisible system behavior. If an operation cannot yet be captured, keep a named evidence placeholder in the outline and material manifest instead of converting it into a concept card.
 - Bind the screenshot or recording to the exact spoken operation anchor; do not let a broad chapter animation cover it.
-
-## Deterministic 3D workflow
-
-- Read [three-dimensional-scenes.md](references/three-dimensional-scenes.md) before adding React Three Fiber, GLB/GLTF assets, 3D cameras, lights, or postprocessing.
-- Remotion remains the only clock, preview, and renderer. Use `ThreeCanvas` from `@remotion/three` and derive every animated value from `useCurrentFrame()`.
-- Keep real operations and results as screenshots or approved recordings. Use 3D for depth, internal system relationships, signal flow, and mechanical articulation.
-- The validator must reject raw R3F `Canvas`, `useFrame()`, effects used as clocks, timers, wall-clock time, unseeded randomness, Theatre.js runtime timing, and model assets missing reviewed license metadata.
 
 ## Screenshot-Led Evidence Mode
 
@@ -97,6 +102,7 @@ Use `anchorStart("context.save")` and `anchorEnd("context.restore")` in Remotion
 - **Captions have one source only:** the `captions` array in `timeline.json`. Every caption must reference exactly one `kind: "narration"` anchor, whose `start` and `end` exactly match its raw ASR source segment. Never render subtitles from `visualAnchors`, shot ranges, beat ranges, scene ranges, or a summary sentence.
 - **Keep visual timing separate:** `visualAnchors` may control screenshots, diagrams, cuts, and camera motion only. They are forbidden as a subtitle data source, including as a fallback when a caption is missing. If a caption is missing, render no subtitle and fail validation.
 - **Separate caption activity from visual state:** resolve the visible caption only when the current time is inside that caption anchor. Resolve scene, screenshot, and callout state from the latest valid timeline anchor whose start has already been reached. During a spoken pause, render no caption but keep the previous visual state and highlighter stable. Never drive visual branching from `caption?.id`, because a caption gap would reset the scene state.
+- **Do not leave implicit visual gaps between adjacent shots:** select the latest shot whose start anchor has been reached and keep that visual until the next shot starts. Do not expire a visual merely because its end narration anchor has ended; spoken pauses commonly exist before the next start anchor and would otherwise produce brief empty flashes. Render a blank stage only when a deliberate silent visual anchor explicitly requests it.
 - **Keep the default scene empty:** scene dispatch must explicitly match every known scene key and return `null` for an unknown key or for time before the first valid visual anchor. Never fall back to the first scene, an arbitrary concept animation, or the last unrelated scene. A clean background is the only valid default.
 - **Bind screenshots to spoken anchors:** every image shot must start and end on `kind: "narration"` anchors. Broad `visualAnchors` are for conceptual diagrams only; they must never keep a screenshot on screen across multiple spoken steps.
 - **Lock captions before visuals:** transcript correction and caption timing are a dedicated phase. Do not create screenshot shots, animation scenes, or a final preview until the caption review gate below is approved.
@@ -115,22 +121,25 @@ Use `anchorStart("context.save")` and `anchorEnd("context.restore")` in Remotion
 ## Mandatory quality gates
 
 - Keep components pure functions of frame/time and model state. Do not use CSS transitions, timers, `useEffect`, unseeded randomness, or command-driven Monaco scrolling.
+- Prefer `interpolate()` with explicit clamping and Bézier easing. Use `spring()` only for intentionally physical motion. Use individual `translate`, `scale`, and `rotate` style properties when practical.
+- Import video and audio from `@remotion/media`, images through Remotion's `<Img>`, and public assets through `staticFile()`. Add compatible Remotion packages with `npx remotion add`.
+- Give meaningful `Sequence`, `Series`, and editable Studio elements descriptive names. Premount expensive or stateful sequences when it prevents first-frame loading artifacts.
+- Use `Interactive.*` only when Studio manipulation is genuinely useful and does not undermine the canonical semantic timeline.
 - Use one state model for scientific/system diagrams. CPU, process, register, queue, arrows, and subtitle emphasis must read the same state.
 - Make scenes stable stages and shots 1.5-5 seconds of continuous composition. Preserve continuity unless a cut is intentional.
-- **Lightweight concept-animation gate:** apply this only when the episode contains a concept-animation scene longer than three seconds. Before implementing all concept scenes, choose one hardest or most representative scene and inspect its start, middle, and end frames in Remotion Studio; do not render an MP4. Record one short entry in `storyboard/animation-review.md` containing the scene ID, the three inspected frames or timestamps, and `pass` or `fail`. Pass only if the sample shows at least two meaningful domain objects, one visible relationship between them, and at least two semantic state changes across the three frames, with no overlap, clipping, or unreadable settled state. A scene made only from cards fading in, nodes lighting up, or one line being drawn fails. Review once per shared visual grammar, not once per scene; screenshot-only episodes and episodes with no qualifying concept scene are exempt.
+- **Optional concept-animation review:** run this only when the user explicitly asks for an intermediate animation check. Inspect one representative scene at its start, middle, and end frames in Remotion Studio and record the result in `storyboard/animation-review.md`. Do not pause normal production for this review. Whether or not the optional review is requested, final concept scenes must contain meaningful domain objects, visible relationships, semantic state changes, and a settled state without overlap, clipping, or unreadable content; a scene made only from cards fading in, nodes lighting up, or one line being drawn is not acceptable.
 - Reserve the bottom subtitle safe area. Return blank subtitles outside a matching interval; never repeat the last line.
 - Generate one caption per spoken phrase from the source audio. Treat ASR only as timing evidence; manually correct the visible text, especially technical names, and never replace a spoken passage with a coarse summary caption.
 - Caption source validation is build-blocking: `src/timings.ts` (or the project subtitle module) must use the caption export derived from `timeline.captions` and must not import or search `visualAnchors` for subtitle rendering. Run the timeline validator before every preview and render.
-- **Caption review gate:** before visual implementation, generate two short audio-plus-subtitle samples from the beginning and ending of the narration. Record their paths and a human approval in `caption-review.json`. The validator must fail if fewer than two samples exist, a sample is missing, or approval is absent. Do not use a full-video render as a substitute for this gate.
+- **Caption review gate:** before visual implementation, generate exactly one representative audio-plus-subtitle sample targeting about 20 seconds. Prefer a passage containing both ordinary Chinese narration and technical terms; 15-25 seconds is acceptable when needed to end on a natural phrase boundary. Record its path, duration, and human approval in `caption-review.json`. The validator must fail if the sample count is not one, its duration is outside that range, the file is missing, or approval is absent. Do not use a full-video render as a substitute for this gate.
 
-Use this minimum review record. `approved` stays `false` until the user has listened to both samples:
+Use this minimum review record. `approved` stays `false` until the user has listened to the sample:
 
 ```json
 {
   "approved": false,
   "samples": [
-    {"anchor": "narration.001", "preview": "out/caption-qc/01-beginning.mp4", "approved": false},
-    {"anchor": "narration.200", "preview": "out/caption-qc/02-ending.mp4", "approved": false}
+    {"anchor": "narration.001", "preview": "out/caption-qc/01-sample.mp4", "durationSeconds": 20.0, "approved": false}
   ]
 }
 ```
@@ -139,13 +148,17 @@ Use this minimum review record. `approved` stays `false` until the user has list
 - Use the motion tokens in [visual-system.md](references/visual-system.md); do not invent routine easing or decorative motion per shot.
 - Place every screen recording inside a `Sequence` that begins at its shot frame. For a result reveal, freeze a frame from the same video source before applying a camera push; never fake an empty terminal with a blackout overlay or swap to an unrelated poster.
 - Run automated QC and inspect the contact sheet and full render. Address errors; record explicit waivers for warnings.
+- For any 3D source, the validator must reject raw R3F `Canvas`, `useFrame()`, effects used as clocks, timers, wall-clock time, unseeded randomness, Theatre.js runtime timing, and model assets missing reviewed license metadata.
 
 ## Reference routing
 
 - Read [workflows.md](references/workflows.md) for the production sequence and project files.
+- Read [official-remotion-practices.md](references/official-remotion-practices.md) before writing or upgrading Remotion markup, media, transitions, fonts, effects, or 3D scenes.
 - Read [scene-shot-architecture.md](references/scene-shot-architecture.md) when designing beats, anchors, or diagram state.
+- Read [motion-design-language.md](references/motion-design-language.md) for complex object choreography and the Motion Canvas-inspired semantic action vocabulary.
+- Read [engineering-animation-patterns.md](references/engineering-animation-patterns.md) for engineering diagrams, mechanisms, measurement, test benches, and failure/recovery sequences.
+- Read [three-dimensional-scenes.md](references/three-dimensional-scenes.md) for the supported R3F stack, single-clock contract, model provenance, and 3D QC.
 - Read [code-walkthrough.md](references/code-walkthrough.md) for the code template.
 - Read [visual-system.md](references/visual-system.md) for stage, motion, and layout rules.
 - Read [recording-and-motion.md](references/recording-and-motion.md) before building subtitles, screen recordings, camera pushes, or HTML-derived animation.
-- Read [three-dimensional-scenes.md](references/three-dimensional-scenes.md) for the supported R3F stack, single-clock contract, model provenance, and 3D QC.
 - Read [quality-gates.md](references/quality-gates.md) before rendering or accepting an output.

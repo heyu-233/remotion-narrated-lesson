@@ -43,8 +43,8 @@ Use `TimedCameraFreezeRecording` in `assets/snippets/screen-recording/ScreenReco
 
 ## Motion design
 
-- Prototype concept animation in standalone HTML/SVG first when the visual mechanism is uncertain. Keep the prototype local to the project, not the skill.
-- Translate approved prototypes into pure frame-driven Remotion state. Do not rely on CSS wall-clock animations, timers, or browser interaction in the final composition.
+- Optionally prototype concept animation in standalone HTML/SVG when the visual mechanism is uncertain. Keep the prototype local to the project, use it for internal design validation, and do not pause for user approval unless the user explicitly requests a prototype review.
+- Translate the selected prototype behavior into pure frame-driven Remotion state. Do not rely on CSS wall-clock animations, timers, or browser interaction in the final composition.
 - Design scenes around narration verbs. For example: error -> shake/block; reset -> rotate/rebuild; boot -> assemble/flow; request -> packet movement; success -> freeze/push.
 - Break concept animation into 1.5-5 second micro-shots. Require a visible state change, camera change, or information-flow change in every shot.
 - Use icons or simple SVG symbols when they identify a real object. Do not substitute text cards for a terminal, board, chip, folder, device node, or network endpoint.

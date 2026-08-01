@@ -93,25 +93,28 @@ def check_subtitle_source(root: Path, errors: list[str]) -> None:
 
 
 def check_caption_review(root: Path, anchor_map: dict[str, dict], errors: list[str]) -> None:
-    """Require two reviewed audio/subtitle samples before visual production is accepted."""
+    """Require one reviewed, roughly 20-second subtitle sample before visual production."""
     review_path = root / "caption-review.json"
     if not review_path.exists():
-        errors.append("missing caption-review.json; create two approved audio/subtitle samples before visual production")
+        errors.append("missing caption-review.json; create one approved 15-25 second audio/subtitle sample before visual production")
         return
     review = read_json(review_path, errors)
     samples = review.get("samples")
     if not review.get("approved"):
         errors.append("caption review is not approved")
-    if not isinstance(samples, list) or len(samples) < 2:
-        errors.append("caption review must contain at least two samples")
+    if not isinstance(samples, list) or len(samples) != 1:
+        errors.append("caption review must contain exactly one sample")
         return
     for index, sample in enumerate(samples, start=1):
         anchor_id = sample.get("anchor") if isinstance(sample, dict) else None
         preview = sample.get("preview") if isinstance(sample, dict) else None
+        duration = sample.get("durationSeconds") if isinstance(sample, dict) else None
         if anchor_id not in anchor_map or anchor_map[anchor_id].get("kind") != "narration":
             errors.append(f"caption review sample {index} must reference a narration anchor")
         if not isinstance(preview, str) or not (root / preview).is_file():
             errors.append(f"caption review sample {index} has no rendered preview")
+        if not isinstance(duration, (int, float)) or not 15 <= duration <= 25:
+            errors.append(f"caption review sample {index} durationSeconds must be between 15 and 25")
         if not isinstance(sample, dict) or not sample.get("approved"):
             errors.append(f"caption review sample {index} is not approved")
 
