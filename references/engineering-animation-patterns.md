@@ -132,3 +132,7 @@ ConfidenceBadge
 
 Components must accept frame-derived progress or serializable state. They must not own autonomous timers.
 
+
+## Explain agency and relationships
+
+For CPU/kernel or other executor-driven mechanisms, read [mechanism-storytelling.md](mechanism-storytelling.md). Distinguish the executor from the structures it changes; retain relevant relationships, disclose execution state only when introduced, and prefer a stable view during a causal sequence. A physical control loop may need a persistent plant/controller/feedback model instead of an execution timeline.

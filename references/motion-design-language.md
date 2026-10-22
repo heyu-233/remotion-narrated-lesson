@@ -59,7 +59,7 @@ Use these verbs in outlines, prototypes, and component APIs:
 - `explode(assembly)`: separate parts along meaningful assembly axes.
 - `recompose(logic)`: keep modules fixed while changing their connections or task order.
 
-Every action must end in a readable state. Avoid perpetual motion.
+Every action must end in a readable state. Avoid perpetual motion. For executor/data roles, progressive relationships and disclosure timing, use [mechanism-storytelling.md](mechanism-storytelling.md). Sound cues follow semantic events; see [sound-design.md](sound-design.md).
 
 ## Shot grammar
 
@@ -71,13 +71,13 @@ Use this default grammar:
 4. `evidence`: emphasize the measurement, state, or causal link.
 5. `handoff`: leave actors positioned for the next shot.
 
-A 1.5–5 second shot usually supports one primary action. Split a shot when two actions require different evidence or camera focus.
+A 1.5–5 second action can be a useful pacing example. Several actions may share one stable composition. Split the view when different evidence or unreadable detail requires it, not merely because another semantic beat begins.
 
 ## Continuity rules
 
 - Give recurring objects stable IDs, colors, proportions, and attachment points.
 - Keep the same object on screen across transfer and state-change shots when possible.
-- Move the camera before rebuilding the stage.
+- Preserve the stage where it supports understanding. Consider focus or local emphasis before moving the camera or rebuilding the view.
 - Preserve the final frame of shot A as the initial state of shot B unless a cut is intentional.
 - Use an `objectStateAt(frame)` or equivalent pure selector for complex actors.
 - Separate world coordinates from camera transforms and from subtitle/UI coordinates.
@@ -101,7 +101,7 @@ An internal prototype may help before full Remotion implementation when any of t
 - a failure path must return to a valid state;
 - the shot depends on occlusion, mechanical clearance, or dimension accuracy.
 
-The prototype should demonstrate the narrative mechanism, not visual polish. Evaluate its spatial logic and action order internally, then rebuild the selected behavior frame-first in Remotion. A prototype is not a user-review gate: do not stop production or request approval unless the user explicitly asks to review the prototype or confirm the animation direction.
+The prototype should demonstrate the narrative mechanism, not visual polish. Evaluate its spatial logic and action order internally, then rebuild the selected behavior frame-first in Remotion. A prototype is not a user-review gate: do not stop production or request a separate approval.
 
 ## Dependency boundary
 

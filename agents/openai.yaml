@@ -1,4 +1,4 @@
 interface:
-  display_name: "Remotion Narrated Lesson"
-  short_description: "Build aligned narrated technical lessons."
-  default_prompt: "Use $remotion-narrated-lesson to build a narrated technical lesson with semantic anchors and an animatic."
+  display_name: "Remotion Series Production"
+  short_description: "Build and maintain technical-video series."
+  default_prompt: "Use $remotion-narrated-lesson to produce the next technical-video episode in my reusable Remotion series engine."

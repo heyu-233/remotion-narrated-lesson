@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Fail closed when a narrated Remotion project has split timing authority."""
+"""Legacy standalone-project validator.
+
+V4 series engines use their Node-based phase-aware episode validator. Keep this
+module only for auditing projects created with the pre-V4 standalone contract.
+"""
 from __future__ import annotations
 
 import argparse

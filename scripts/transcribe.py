@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Transcribe narration into the V2 transcript contract using faster-whisper."""
+"""Transcribe narration into raw Whisper evidence for later anchor review."""
 from __future__ import annotations
 import argparse, json
 from pathlib import Path

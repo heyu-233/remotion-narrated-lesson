@@ -24,7 +24,7 @@ Then install compatible third-party packages with the project's package manager.
 
 ## Responsibility boundary
 
-- `timeline.json` owns narration, subtitles, shot bounds, and every transition between teaching states.
+- `episodes/<id>/timeline.json` owns narration, subtitles, shot bounds, and every transition between teaching states.
 - Remotion owns the frame, preview, and render.
 - React Three Fiber expresses scene geometry only.
 - Drei provides deterministic geometry, cameras, lights, and loaders.
@@ -34,16 +34,13 @@ Then install compatible third-party packages with the project's package manager.
 
 ## Scene structure
 
-Put reusable 3D code under:
+Put reusable 3D infrastructure under `src/engine/three/`. Put episode-specific scenes and assets under:
 
 ```text
-src/three/
-  components/
-  scenes/
-  materials/
-public/models/
-public/textures/
-public/hdri/
+src/episodes/<id>/three/
+public/episodes/<id>/models/
+public/episodes/<id>/textures/
+public/episodes/<id>/hdri/
 ```
 
 Keep labels, subtitles, code, and long Chinese text in the Remotion HTML layer unless depth is essential. This avoids font-loading uncertainty and keeps text outside camera clipping.
@@ -82,13 +79,13 @@ Never use these in project 3D source:
 
 ## Models and provenance
 
-Procedural geometry needs no asset manifest. Any `.glb` or `.gltf` reference requires `<project>/three-assets.json`:
+Procedural geometry needs no asset manifest. Any `.glb` or `.gltf` reference requires `episodes/<id>/three-assets.json`:
 
 ```json
 {
   "assets": [
     {
-      "path": "public/models/arm-board.glb",
+      "path": "public/episodes/<id>/models/arm-board.glb",
       "source": "https://example.com/model",
       "license": "CC-BY-4.0",
       "upAxis": "Y",
@@ -104,10 +101,10 @@ Normalize model scale, origin, and axis before choreography. Do not rely on a re
 ## Required QC
 
 1. Run ESLint and TypeScript.
-2. Run `validate_timeline.py` with `--source-root`; it rejects autonomous clocks, raw Canvas, unreviewed models, and missing provenance.
+2. Run episode preview validation. Also scan the episode 3D source for autonomous clocks, raw Canvas, unreviewed models, and missing provenance until those checks are integrated into the Node validator.
 3. Render stills for setup, every action transition, settle, and handoff.
 4. Inspect framing, occlusion, material clipping, text alignment, subtitle safe area, and black first frames.
-5. Render a short prototype before inserting the scene into a full lesson.
+5. When useful, render a short internal prototype before inserting the scene into a full lesson. This does not require user review unless the user explicitly asks for it.
 6. Generate the normal contact sheet after full integration.
 
 Use one canvas for a continuous scene. Avoid multiple simultaneous WebGL canvases unless a reviewed shot design requires them.
